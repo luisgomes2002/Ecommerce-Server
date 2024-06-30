@@ -11,7 +11,7 @@ O projeto é um sistema de e-commerce voltado para compra e venda de produtos. E
 ```
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=seu_servidor;Database=sua_base_de_dados;User Id=seu_usuario;Password=sua_senha;"
+    "DefaultConnection": "Server=seu_servidor;Database=sua_base_de_dados;User=seu_usuario;Password=sua_senha;"
   },
   "Jwt": {
     "Key": "sua_chave_secreta_para_jwt",
