@@ -11,12 +11,12 @@ namespace Server.Data
 
 		}
 
-		public DbSet<UserModel> Users { get; set; }
+		public DbSet<UsersModel> Users { get; set; }
 		public DbSet<ProductsModel> Products { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
-			modelBuilder.ApplyConfiguration(new UserMap());
+			modelBuilder.ApplyConfiguration(new UsersMap());
 			modelBuilder.ApplyConfiguration(new ProductsMap());
 			base.OnModelCreating(modelBuilder);
 		}
