@@ -25,15 +25,29 @@ namespace Server.Controllers
         [HttpGet]
 		public async Task<ActionResult<List<ProductsModel>>> FindAllProducts()
 		{
-           List<ProductsModel> products = await iProductRepository.FindAllProducts();
-           return Ok(products);
+            try
+            {
+                List<ProductsModel> products = await iProductRepository.FindAllProducts();
+                return Ok(products);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Erro ao mostrar produtos", ex);
+            }
 		}
 
         [HttpGet("{id}")]
         public async Task<ActionResult<List<ProductsModel>>> FindProductById(int id)
         {
-            ProductsModel product = await iProductRepository.FindProductById(id);
-            return Ok(product);
+            try
+            {
+                ProductsModel product = await iProductRepository.FindProductById(id);
+                return Ok(product);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Erro ao achar um produto", ex);
+            }
         }
 
 		[HttpPost]
@@ -78,8 +92,16 @@ namespace Server.Controllers
         [Authorize]
         public async Task<ActionResult<ProductsModel>> DeleteProduct(int id)
 		{
-			bool excluded = await iProductRepository.DeleteProduct(id);
-			return Ok(excluded);
+            try
+            {
+                bool excluded = await iProductRepository.DeleteProduct(id);
+                return Ok(excluded);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Erro ao excluir um produto", ex);
+            }
+        
 		}
     } 
 }
