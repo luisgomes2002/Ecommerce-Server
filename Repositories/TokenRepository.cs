@@ -9,14 +9,14 @@ using System.Threading.Tasks;
 
 namespace Server.Repositories
 {
-    public class TokenRepository(IUsersRepository userRepository)
+    public class TokenRepository(IUsersRepository userRepository, IConfiguration configuration)
     {
         private readonly IUsersRepository iuserRepository = userRepository;
-        readonly string SecretKey = "bad07acd-d70b-478d-99b1-8fbe825824dc"; //.env
+        readonly IConfiguration configuration = configuration;
 
         public string GenerateTokenJwt(string userEmail)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>("Jwt:Key")));
             var credential = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
@@ -25,8 +25,8 @@ namespace Server.Repositories
             };  
 
             var token = new JwtSecurityToken(
-                   issuer: "sua_empresa", //.env
-                   audience: "sua_aplicacao", //.env
+                   issuer: configuration.GetValue<string>("Jwt:Issuer"),
+                   audience: configuration.GetValue<string>("Jwt:Audience"),
                    claims: claims,
                    expires: DateTime.Now.AddDays(1),
                    signingCredentials: credential
@@ -38,7 +38,7 @@ namespace Server.Repositories
         public async Task<int> VerifyToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(SecretKey);
+            var key = Encoding.UTF8.GetBytes(configuration.GetValue<string>("Jwt:Key"));
 
             try
             {
@@ -47,9 +47,9 @@ namespace Server.Repositories
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true,
-                    ValidIssuer = "sua_empresa", //.env
+                    ValidIssuer = configuration.GetValue<string>("Jwt:Issuer"), //.env
                     ValidateAudience = true,
-                    ValidAudience = "sua_aplicacao", //.env
+                    ValidAudience = configuration.GetValue<string>("Jwt:Audience"), //.env
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
