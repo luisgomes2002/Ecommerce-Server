@@ -9,14 +9,20 @@ using System.Threading.Tasks;
 
 namespace Server.Repositories
 {
-    public class TokenRepository(IUsersRepository userRepository, IConfiguration configuration)
+    public class TokenRepository
     {
-        private readonly IUsersRepository iuserRepository = userRepository;
-        readonly IConfiguration configuration = configuration;
+        private readonly IUsersRepository iUserRepository;
+        private readonly IConfiguration iConfiguration;
+
+        public TokenRepository(IUsersRepository iUserRepository, IConfiguration iConfiguration)
+        {
+            this.iUserRepository = iUserRepository;
+            this.iConfiguration = iConfiguration;
+        } 
 
         public string GenerateTokenJwt(string userEmail)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration.GetValue<string>("Jwt:Key")));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(iConfiguration.GetValue<string>("Jwt:Key")));
             var credential = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
@@ -25,8 +31,8 @@ namespace Server.Repositories
             };  
 
             var token = new JwtSecurityToken(
-                   issuer: configuration.GetValue<string>("Jwt:Issuer"),
-                   audience: configuration.GetValue<string>("Jwt:Audience"),
+                   issuer: iConfiguration.GetValue<string>("Jwt:Issuer"),
+                   audience: iConfiguration.GetValue<string>("Jwt:Audience"),
                    claims: claims,
                    expires: DateTime.Now.AddDays(1),
                    signingCredentials: credential
@@ -38,7 +44,7 @@ namespace Server.Repositories
         public async Task<int> VerifyToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(configuration.GetValue<string>("Jwt:Key"));
+            var key = Encoding.UTF8.GetBytes(iConfiguration.GetValue<string>("Jwt:Key"));
 
             try
             {
@@ -47,9 +53,9 @@ namespace Server.Repositories
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true,
-                    ValidIssuer = configuration.GetValue<string>("Jwt:Issuer"), //.env
+                    ValidIssuer = iConfiguration.GetValue<string>("Jwt:Issuer"),
                     ValidateAudience = true,
-                    ValidAudience = configuration.GetValue<string>("Jwt:Audience"), //.env
+                    ValidAudience = iConfiguration.GetValue<string>("Jwt:Audience"),
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
@@ -62,7 +68,7 @@ namespace Server.Repositories
 
                 if (userIdClaim == null) throw new SecurityTokenException("Não foi possível obter o userId do token");
 
-                UsersModel user = await iuserRepository.FindUserByEmail(userIdClaim.Value);
+                UsersModel user = await iUserRepository.FindUserByEmail(userIdClaim.Value);
 
                 if (user == null) throw new SecurityTokenException("Usuário não encontrado");
 

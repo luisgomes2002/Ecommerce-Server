@@ -10,22 +10,29 @@ namespace Server.Controllers
 	[Route("api/[controller]")]
 	[ApiController]
 
-	public class ProductsController(IProductsRepository productRepository, TokenRepository tokenRepository) : Controller
+	public class ProductsController : Controller
     {
-		private readonly IProductsRepository productRepository = productRepository;
-        private readonly TokenRepository tokenRepository = tokenRepository;
+		private readonly IProductsRepository iProductRepository;
+        private readonly TokenRepository TokenRepository;
 
-		[HttpGet]
+        public ProductsController(IProductsRepository iProductRepository, TokenRepository iTokenRepository)
+        {
+            this.iProductRepository = iProductRepository;
+            this.TokenRepository = iTokenRepository;
+        }
+
+
+        [HttpGet]
 		public async Task<ActionResult<List<ProductsModel>>> FindAllProducts()
 		{
-           List<ProductsModel> products = await productRepository.FindAllProducts();
+           List<ProductsModel> products = await iProductRepository.FindAllProducts();
            return Ok(products);
 		}
 
         [HttpGet("{id}")]
         public async Task<ActionResult<List<ProductsModel>>> FindProductById(int id)
         {
-            ProductsModel product = await productRepository.FindProductById(id);
+            ProductsModel product = await iProductRepository.FindProductById(id);
             return Ok(product);
         }
 
@@ -38,9 +45,9 @@ namespace Server.Controllers
                 var authHeader = Request.Headers.Authorization.ToString();
                 var token = authHeader.Replace("Bearer ", "");
 
-                int userId = await tokenRepository.VerifyToken(token);
+                int userId = await TokenRepository.VerifyToken(token);
 
-                ProductsModel product = await productRepository.CreateProduct(productModel, userId);
+                ProductsModel product = await iProductRepository.CreateProduct(productModel, userId);
 
                 return product;
             }
@@ -57,7 +64,7 @@ namespace Server.Controllers
             try
             {
                 productModel.Id = id;
-                ProductsModel product = await productRepository.UpdateProduct(productModel, id);
+                ProductsModel product = await iProductRepository.UpdateProduct(productModel, id);
                 return Ok(product);
             }
             catch (Exception ex)
@@ -71,7 +78,7 @@ namespace Server.Controllers
         [Authorize]
         public async Task<ActionResult<ProductsModel>> DeleteProduct(int id)
 		{
-			bool excluded = await productRepository.DeleteProduct(id);
+			bool excluded = await iProductRepository.DeleteProduct(id);
 			return Ok(excluded);
 		}
     } 

@@ -5,10 +5,17 @@ using Server.Repositories.Interfaces;
 
 namespace Server.Repositories
 {
-	public class ProductsRepository(SystemDbContext systemDbContext, IUsersRepository usersRepository) : IProductsRepository
+	public class ProductsRepository : IProductsRepository
 	{
-		private readonly SystemDbContext _dbContext = systemDbContext;
-		private readonly IUsersRepository usersRepository = usersRepository;
+		private readonly SystemDbContext _dbContext;
+		private readonly IUsersRepository iUsersRepository;
+
+		public ProductsRepository(SystemDbContext systemDbContext, IUsersRepository iUsersRepository)
+		{
+			_dbContext = systemDbContext;
+			this.iUsersRepository = iUsersRepository;
+
+        }
 
         public async Task<ProductsModel> FindProductById(int id)
         {
@@ -25,7 +32,7 @@ namespace Server.Repositories
 
 		public async Task<ProductsModel> CreateProduct(ProductsModel product, int userId)
 		{
-			UsersModel userInfo = await usersRepository.FindUserById(userId);
+			UsersModel userInfo = await iUsersRepository.FindUserById(userId);
 
 			if(!userInfo.IsMod) throw new ("Este usuário não tem permissão para criar produtos");
 

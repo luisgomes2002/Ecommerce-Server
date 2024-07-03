@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using Server.Data;
@@ -7,12 +8,18 @@ using Server.Repositories.Interfaces;
 
 namespace Server.Repositories
 {
-	public class UsersRepository(SystemDbContext systemDbContext, IPasswordHasher passwordHasher) : IUsersRepository
+	public class UsersRepository : IUsersRepository
 	{
-		private readonly SystemDbContext _dbContext = systemDbContext;
-        private readonly IPasswordHasher passwordHasher = passwordHasher;
+		private readonly SystemDbContext _dbContext;
+        private readonly IPasswordHasher iPasswordHasher;
 
-		public async Task<UsersModel> FindUserById(int id)
+		public UsersRepository(SystemDbContext systemDbContext, IPasswordHasher iPasswordHasher)
+		{
+			_dbContext = systemDbContext;
+			this.iPasswordHasher = iPasswordHasher;
+		}
+
+        public async Task<UsersModel> FindUserById(int id)
 		{
 			return await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == id) 
 				?? throw new KeyNotFoundException($"User with Id {id} not found.");
@@ -32,7 +39,7 @@ namespace Server.Repositories
 
         public async Task<UsersModel> CreateUser(UsersModel user)
         { 
-            var passwordHash = passwordHasher.Hash(user.Password);
+            var passwordHash = iPasswordHasher.Hash(user.Password);
             user.Password = passwordHash;
 
             await _dbContext.Users.AddAsync(user);
