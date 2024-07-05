@@ -25,9 +25,7 @@ namespace Server.Controllers
             try
             {
                 LoginModel userLogin = await iLoginRepository.Login(login);
-
                 var token = tokenRepository.GenerateTokenJwt(login.Email);
-                
                 return token;
             }
             catch (Exception ex)

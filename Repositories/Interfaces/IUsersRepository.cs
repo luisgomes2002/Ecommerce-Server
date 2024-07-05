@@ -4,7 +4,7 @@ namespace Server.Repositories.Interfaces
 {
 	public interface IUsersRepository
 	{
-		Task<List<UsersModel>> FindAllUsers();
+		Task<List<UsersModel>> FindAllUsers(int userId);
 		Task<UsersModel> FindUserById(int id);
         Task<UsersModel> FindUserByEmail(string email);
         Task<UsersModel> CreateUser(UsersModel user);

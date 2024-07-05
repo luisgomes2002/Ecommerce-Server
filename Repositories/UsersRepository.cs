@@ -21,13 +21,17 @@ namespace Server.Repositories
 
         public async Task<UsersModel> FindUserById(int id)
 		{
-			return await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == id) 
+            return await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == id) 
 				?? throw new KeyNotFoundException($"User with Id {id} not found.");
         }
 
-		public async Task<List<UsersModel>> FindAllUsers()
+		public async Task<List<UsersModel>> FindAllUsers(int userId)
 		{
-			return await _dbContext.Users.ToListAsync();
+            UsersModel userInfo = await FindUserById(userId);
+
+            if (!userInfo.IsMod) throw new("Este usuário não tem permissão ver os usuários");
+
+            return await _dbContext.Users.ToListAsync();
 		}
 
 		public async Task<UsersModel> FindUserByEmail(string email)

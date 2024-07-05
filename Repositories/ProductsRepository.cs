@@ -17,16 +17,16 @@ namespace Server.Repositories
 
         }
 
-        public async Task<ProductsModel> FindProductById(int id)
+        public async Task<ProductsModel> FindProductById(int productId)
         {
             return await _dbContext.Products
-               .FirstOrDefaultAsync(x => x.Id == id)
-               ?? throw new KeyNotFoundException($"Product with Id: {id} not found.");
+               .FirstOrDefaultAsync(x => x.Id == productId)
+               ?? throw new KeyNotFoundException($"Product with Id: {productId} not found.");
         }
 
         public async Task<List<ProductsModel>> FindAllProducts()
 		{
-			return await _dbContext.Products
+            return await _dbContext.Products
 				.ToListAsync();
 		}
 
@@ -45,10 +45,14 @@ namespace Server.Repositories
 			return product; 
         }
 
-		public async Task<ProductsModel> UpdateProduct(ProductsModel product, int id)
+		public async Task<ProductsModel> UpdateProduct(ProductsModel product, int productId, int userId)
 		{
-            ProductsModel productById = await FindProductById(id) 
-				?? throw new Exception($"Product by id:{id} not found");
+            UsersModel userInfo = await iUsersRepository.FindUserById(userId);
+
+            if (!userInfo.IsMod) throw new("Este usuário não tem permissão para utualizar esse produto");
+
+            ProductsModel productById = await FindProductById(productId) 
+				?? throw new Exception($"Product by id:{productId} not found");
 
             productById.Name = product.Name;
             productById.Value = product.Value;
@@ -61,10 +65,14 @@ namespace Server.Repositories
 			return productById;
 		}
 
-		public async Task<bool> DeleteProduct(int id)
+		public async Task<bool> DeleteProduct(int productId, int userId)
 		{
-            ProductsModel productById = await FindProductById(id) 
-				?? throw new Exception($"Product by id:{id} not found");
+            UsersModel userInfo = await iUsersRepository.FindUserById(userId);
+
+            if (!userInfo.IsMod) throw new("Este usuário não tem permissão para deletar esse produto");
+
+            ProductsModel productById = await FindProductById(productId) 
+				?? throw new Exception($"Product by id:{productId} not found");
 
 			_dbContext.Products.Remove(productById);
 			await _dbContext.SaveChangesAsync();

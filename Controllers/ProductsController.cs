@@ -13,35 +13,34 @@ namespace Server.Controllers
 	public class ProductsController : Controller
     {
 		private readonly IProductsRepository iProductRepository;
-        private readonly TokenRepository TokenRepository;
+        private readonly UsersController usersController;
 
-        public ProductsController(IProductsRepository iProductRepository, TokenRepository iTokenRepository)
+        public ProductsController(IProductsRepository iProductRepository, UsersController usersController)
         {
             this.iProductRepository = iProductRepository;
-            this.TokenRepository = iTokenRepository;
+            this.usersController = usersController;
         }
-
 
         [HttpGet]
 		public async Task<ActionResult<List<ProductsModel>>> FindAllProducts()
 		{
             try
-            {
+            { 
                 List<ProductsModel> products = await iProductRepository.FindAllProducts();
                 return Ok(products);
             }
             catch (Exception ex)
             {
-                throw new Exception("Erro ao mostrar produtos", ex);
+                throw new Exception("Erro ao mostrar Todos os Produtos", ex);
             }
 		}
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<List<ProductsModel>>> FindProductById(int id)
+        public async Task<ActionResult<List<ProductsModel>>> FindProductById(int productId)
         {
             try
             {
-                ProductsModel product = await iProductRepository.FindProductById(id);
+                ProductsModel product = await iProductRepository.FindProductById(productId);
                 return Ok(product);
             }
             catch (Exception ex)
@@ -56,11 +55,7 @@ namespace Server.Controllers
 		{
             try
             {
-                var authHeader = Request.Headers.Authorization.ToString();
-                var token = authHeader.Replace("Bearer ", "");
-
-                int userId = await TokenRepository.VerifyToken(token);
-
+                int userId = await usersController.GetUserIdByToken();
                 ProductsModel product = await iProductRepository.CreateProduct(productModel, userId);
 
                 return product;
@@ -73,12 +68,14 @@ namespace Server.Controllers
 
         [HttpPut("{id}")]
         [Authorize]
-        public async Task<ActionResult<ProductsModel>> UpdateProduct([FromBody] ProductsModel productModel, int id)
+        public async Task<ActionResult<ProductsModel>> UpdateProduct([FromBody] ProductsModel productModel, int productId)
         {
             try
             {
-                productModel.Id = id;
-                ProductsModel product = await iProductRepository.UpdateProduct(productModel, id);
+                int userId = await usersController.GetUserIdByToken();
+
+                productModel.Id = productId;
+                ProductsModel product = await iProductRepository.UpdateProduct(productModel, productId, userId);
                 return Ok(product);
             }
             catch (Exception ex)
@@ -90,11 +87,13 @@ namespace Server.Controllers
 
 		[HttpDelete("{id}")]
         [Authorize]
-        public async Task<ActionResult<ProductsModel>> DeleteProduct(int id)
+        public async Task<ActionResult<ProductsModel>> DeleteProduct(int productId)
 		{
             try
             {
-                bool excluded = await iProductRepository.DeleteProduct(id);
+                int userId = await usersController.GetUserIdByToken();
+
+                bool excluded = await iProductRepository.DeleteProduct(productId, userId);
                 return Ok(excluded);
             }
             catch (Exception ex)
