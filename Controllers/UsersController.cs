@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Server.Models;
 using Server.Repositories;
 using Server.Repositories.Interfaces;
+using System.Linq;
 
 namespace Server.Controllers
 {
@@ -38,7 +39,22 @@ namespace Server.Controllers
             {
                 int userId = await GetUserIdByToken();
                 List<UsersModel> users = await iUserRepository.FindAllUsers(userId);
-                return Ok(users);
+
+                var newUser = users.Select(user => new {
+                    user.Id,
+                    user.Name,
+                    user.Email,
+                    user.Phone,
+                    user.Address,
+                    user.City,
+                    user.Region,
+                    user.PostalCode,
+                    user.Country,
+                    user.Cart,
+                    user.IsMod
+                }).ToList();
+
+                return Ok(newUser);
             }
             catch (Exception ex)
             {
@@ -54,7 +70,23 @@ namespace Server.Controllers
             {
                 int userId = await GetUserIdByToken();
                 UsersModel user = await iUserRepository.FindUserById(id);
-                return Ok(user);
+
+                var newUser = new
+                {
+                    user.Id,
+                    user.Name,
+                    user.Email,
+                    user.Phone,
+                    user.Address,
+                    user.City,
+                    user.Region,
+                    user.PostalCode,
+                    user.Country,
+                    user.Cart,
+                    user.IsMod
+                };
+
+                return Ok(newUser);
             }
             catch (Exception ex)
             {
