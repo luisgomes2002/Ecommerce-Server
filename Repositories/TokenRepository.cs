@@ -1,34 +1,28 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using Server.Models;
 using Server.Repositories.Interfaces;
-using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Server.Repositories
 {
-    public class TokenRepository
+    public class TokenRepository(IUsersRepository iUserRepository, IConfiguration iConfiguration)
     {
-        private readonly IUsersRepository iUserRepository;
-        private readonly IConfiguration iConfiguration;
-
-        public TokenRepository(IUsersRepository iUserRepository, IConfiguration iConfiguration)
-        {
-            this.iUserRepository = iUserRepository;
-            this.iConfiguration = iConfiguration;
-        } 
+        private readonly IUsersRepository iUserRepository = iUserRepository;
+        private readonly IConfiguration iConfiguration = iConfiguration;
 
         public string GenerateTokenJwt(string userEmail)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(iConfiguration.GetValue<string>("Jwt:Key")));
+            var jwtKey = iConfiguration.GetValue<string>("Jwt:Key") ?? throw new ArgumentNullException("JWT Key cannot be null");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+
             var credential = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
                 new Claim(ClaimTypes.Email, userEmail),
-            };  
+            };
 
             var token = new JwtSecurityToken(
                    issuer: iConfiguration.GetValue<string>("Jwt:Issuer"),
@@ -44,7 +38,8 @@ namespace Server.Repositories
         public async Task<int> VerifyToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(iConfiguration.GetValue<string>("Jwt:Key"));
+            var jwtKey = iConfiguration.GetValue<string>("Jwt:Key") ?? throw new ArgumentNullException("JWT Key cannot be null");
+            var key = Encoding.UTF8.GetBytes(jwtKey);
 
             try
             {

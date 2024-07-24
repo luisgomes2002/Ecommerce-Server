@@ -14,5 +14,6 @@ namespace Server.Models
 		public string? Country { get; set; } = null;
 		public string[]? Cart { get; set; }
 		public bool IsMod { get; set; } = false;
-	}
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+    }
 }

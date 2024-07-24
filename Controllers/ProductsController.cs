@@ -1,31 +1,23 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Models;
-using Server.Repositories;
 using Server.Repositories.Interfaces;
-using System.Security.Claims;
 
 namespace Server.Controllers
 {
-	[Route("api/[controller]")]
-	[ApiController]
+    [Route("api/[controller]")]
+    [ApiController]
 
-	public class ProductsController : Controller
+    public class ProductsController(IProductsRepository iProductRepository, UsersController usersController) : Controller
     {
-		private readonly IProductsRepository iProductRepository;
-        private readonly UsersController usersController;
-
-        public ProductsController(IProductsRepository iProductRepository, UsersController usersController)
-        {
-            this.iProductRepository = iProductRepository;
-            this.usersController = usersController;
-        }
+        private readonly IProductsRepository iProductRepository = iProductRepository;
+        private readonly UsersController usersController = usersController;
 
         [HttpGet]
-		public async Task<ActionResult<List<ProductsModel>>> FindAllProducts()
-		{
+        public async Task<ActionResult<List<ProductsModel>>> FindAllProducts()
+        {
             try
-            { 
+            {
                 List<ProductsModel> products = await iProductRepository.FindAllProducts();
                 return Ok(products);
             }
@@ -33,7 +25,7 @@ namespace Server.Controllers
             {
                 throw new Exception("Erro ao mostrar Todos os Produtos", ex);
             }
-		}
+        }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<List<ProductsModel>>> FindProductById(int productId)
@@ -49,10 +41,10 @@ namespace Server.Controllers
             }
         }
 
-		[HttpPost]
+        [HttpPost]
         [Authorize]
         public async Task<ActionResult<ProductsModel>> CreateProduct([FromBody] ProductsModel productModel)
-		{
+        {
             try
             {
                 int userId = await usersController.GetUserIdByToken();
@@ -64,7 +56,7 @@ namespace Server.Controllers
             {
                 throw new Exception("Erro ao criar um produto", ex);
             }
-		}
+        }
 
         [HttpPut("{id}")]
         [Authorize]
@@ -82,13 +74,13 @@ namespace Server.Controllers
             {
                 throw new Exception("Erro ao atualizar o produto", ex);
             }
-            
+
         }
 
-		[HttpDelete("{id}")]
+        [HttpDelete("{id}")]
         [Authorize]
         public async Task<ActionResult<ProductsModel>> DeleteProduct(int productId)
-		{
+        {
             try
             {
                 int userId = await usersController.GetUserIdByToken();
@@ -100,7 +92,7 @@ namespace Server.Controllers
             {
                 throw new Exception("Erro ao excluir um produto", ex);
             }
-        
-		}
-    } 
+
+        }
+    }
 }

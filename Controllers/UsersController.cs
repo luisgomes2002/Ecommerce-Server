@@ -1,25 +1,19 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Server.Data.DataBaseTables;
 using Server.Models;
 using Server.Repositories;
 using Server.Repositories.Interfaces;
-using System.Linq;
 
 namespace Server.Controllers
 {
     [Route("api/[controller]")]
-	[ApiController]
+    [ApiController]
 
-	public class UsersController : Controller
-	{
-		private readonly IUsersRepository iUserRepository;
-        private readonly TokenRepository tokenRepository;
-
-        public UsersController(IUsersRepository iUserRepository, TokenRepository tokenRepository)
-        {
-            this.iUserRepository = iUserRepository;
-            this.tokenRepository = tokenRepository;
-        }
+    public class UsersController(IUsersRepository iUserRepository, TokenRepository tokenRepository) : Controller
+    {
+        private readonly IUsersRepository iUserRepository = iUserRepository;
+        private readonly TokenRepository tokenRepository = tokenRepository;
 
         [NonAction]
         public async Task<int> GetUserIdByToken()
@@ -34,13 +28,14 @@ namespace Server.Controllers
         [HttpGet]
         [Authorize]
         public async Task<ActionResult<List<UsersModel>>> FindAllUser()
-		{
+        {
             try
             {
                 int userId = await GetUserIdByToken();
                 List<UsersModel> users = await iUserRepository.FindAllUsers(userId);
 
-                var newUser = users.Select(user => new {
+                var newUser = users.Select(user => new
+                {
                     user.Id,
                     user.Name,
                     user.Email,
@@ -60,7 +55,7 @@ namespace Server.Controllers
             {
                 throw new Exception("Erro ao mostrar Todos os Usuarios", ex);
             }
-		}
+        }
 
         [HttpGet("{id}")]
         [Authorize]
@@ -91,12 +86,12 @@ namespace Server.Controllers
             catch (Exception ex)
             {
                 throw new Exception("Erro ao mostrar usuario by Id", ex);
-            }  
+            }
         }
 
-		[HttpPost]
-		public async Task<ActionResult<UsersModel>> CreateUser([FromBody] UsersModel userModel)
-		{
+        [HttpPost]
+        public async Task<ActionResult<UsersModel>> CreateUser([FromBody] UsersModel userModel)
+        {
             try
             {
                 UsersModel user = await iUserRepository.CreateUser(userModel);
@@ -106,8 +101,8 @@ namespace Server.Controllers
             {
                 throw new Exception("Erro ao criar usuario", ex);
             }
-			
-		}
+
+        }
 
         [HttpPut("{id}")]
         public async Task<ActionResult<UsersModel>> UpdateUser([FromBody] UsersModel userModel, int id)
@@ -122,12 +117,12 @@ namespace Server.Controllers
             {
                 throw new Exception("Erro ao atualizar o usuario", ex);
             }
-           
+
         }
 
-		[HttpDelete("{id}")]
-		public async Task<ActionResult<UsersModel>> DeleteUser(int id)
-		{
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<UsersModel>> DeleteUser(int id)
+        {
             try
             {
                 bool excluded = await iUserRepository.DeleteUser(id);
@@ -137,7 +132,7 @@ namespace Server.Controllers
             {
                 throw new Exception("Erro ao deletar o usuario", ex);
             }
-            
-		}
-    } 
+
+        }
+    }
 }

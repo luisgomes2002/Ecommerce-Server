@@ -15,18 +15,18 @@ namespace Server.Repositories
 			_dbContext = systemDbContext;
 			this.iUsersRepository = iUsersRepository;
 
-        }
+		}
 
-        public async Task<ProductsModel> FindProductById(int productId)
-        {
-            return await _dbContext.Products
-               .FirstOrDefaultAsync(x => x.Id == productId)
-               ?? throw new KeyNotFoundException($"Product with Id: {productId} not found.");
-        }
-
-        public async Task<List<ProductsModel>> FindAllProducts()
+		public async Task<ProductsModel> FindProductById(int productId)
 		{
-            return await _dbContext.Products
+			return await _dbContext.Products
+			   .FirstOrDefaultAsync(x => x.Id == productId)
+			   ?? throw new KeyNotFoundException($"Product with Id: {productId} not found.");
+		}
+
+		public async Task<List<ProductsModel>> FindAllProducts()
+		{
+			return await _dbContext.Products
 				.ToListAsync();
 		}
 
@@ -34,32 +34,32 @@ namespace Server.Repositories
 		{
 			UsersModel userInfo = await iUsersRepository.FindUserById(userId);
 
-			if(!userInfo.IsMod) throw new ("Este usuário não tem permissão para criar produtos");
+			if (!userInfo.IsMod) throw new("Este usuï¿½rio nï¿½o tem permissï¿½o para criar produtos");
 
-            product.UserId = userId;
+			product.UserId = userId;
 			product.UserName = userInfo.Name;
 
-            await _dbContext.Products.AddAsync(product);
+			await _dbContext.Products.AddAsync(product);
 			await _dbContext.SaveChangesAsync();
 
-			return product; 
-        }
+			return product;
+		}
 
 		public async Task<ProductsModel> UpdateProduct(ProductsModel product, int productId, int userId)
 		{
-            UsersModel userInfo = await iUsersRepository.FindUserById(userId);
+			UsersModel userInfo = await iUsersRepository.FindUserById(userId);
 
-            if (!userInfo.IsMod) throw new("Este usuário não tem permissão para utualizar esse produto");
+			if (!userInfo.IsMod) throw new("Este usuï¿½rio nï¿½o tem permissï¿½o para utualizar esse produto");
 
-            ProductsModel productById = await FindProductById(productId) 
+			ProductsModel productById = await FindProductById(productId)
 				?? throw new Exception($"Product by id:{productId} not found");
 
-            productById.Name = product.Name;
-            productById.Value = product.Value;
-            productById.Description = product.Description;
+			productById.Name = product.Name;
+			productById.Price = product.Price;
+			productById.Description = product.Description;
 			productById.Status = product.Status;
 
-            _dbContext.Products.Update(productById);
+			_dbContext.Products.Update(productById);
 			await _dbContext.SaveChangesAsync();
 
 			return productById;
@@ -67,11 +67,11 @@ namespace Server.Repositories
 
 		public async Task<bool> DeleteProduct(int productId, int userId)
 		{
-            UsersModel userInfo = await iUsersRepository.FindUserById(userId);
+			UsersModel userInfo = await iUsersRepository.FindUserById(userId);
 
-            if (!userInfo.IsMod) throw new("Este usuário não tem permissão para deletar esse produto");
+			if (!userInfo.IsMod) throw new("Este usuï¿½rio nï¿½o tem permissï¿½o para deletar esse produto");
 
-            ProductsModel productById = await FindProductById(productId) 
+			ProductsModel productById = await FindProductById(productId)
 				?? throw new Exception($"Product by id:{productId} not found");
 
 			_dbContext.Products.Remove(productById);
@@ -79,5 +79,5 @@ namespace Server.Repositories
 
 			return true;
 		}
-    }
+	}
 }

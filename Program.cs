@@ -18,14 +18,13 @@ builder.Services.AddSwaggerGen();
 var connectionString = builder.Configuration.GetConnectionString("DataBase");
 var serverVersion = new MySqlServerVersion(new Version(8, 0, 21));
 
-builder.Services.AddDbContext<SystemDbContext>(options =>
-    options.UseMySql(connectionString, serverVersion));
-
+builder.Services.AddScoped<SystemDbConnections>();
+builder.Services.AddScoped<CreateDbTables>();
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IProductsRepository, ProductsRepository>();
-builder.Services.AddScoped<IPasswordHasher, PasswordHasher>(); 
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<ILoginRepository, LoginRepository>();
-builder.Services.AddScoped<TokenRepository, TokenRepository>();
+builder.Services.AddScoped<TokenRepository>();
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -38,6 +37,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+//JwtConfig
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -51,12 +51,28 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"], 
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured.")))
     };
 });
 
+//build app
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var dbConnections = services.GetRequiredService<SystemDbConnections>();
+    var dbTables = services.GetRequiredService<CreateDbTables>();
+
+    // Cria o banco de dados se n�o existir
+    dbConnections.CreateDataBase();
+
+    // Cria a tabela de usu�rios se n�o existir
+    dbTables.CreateUserTable();
+}
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -71,7 +87,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 
-app.UseAuthorization(); 
+app.UseAuthorization();
 
 app.MapControllers();
 

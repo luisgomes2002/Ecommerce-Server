@@ -1,80 +1,72 @@
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using Server.Data;
+using Server.Data.DataBaseTables;
 using Server.Models;
 using Server.Repositories.Interfaces;
 
 namespace Server.Repositories
 {
-	public class UsersRepository : IUsersRepository
-	{
-		private readonly SystemDbContext _dbContext;
-        private readonly IPasswordHasher iPasswordHasher;
+    public class UsersRepository(UsersDbConnections usersDbConnections, IPasswordHasher iPasswordHasher) : IUsersRepository
+    {
+        private readonly UsersDbConnections usersDbConnections = usersDbConnections;
+        private readonly IPasswordHasher iPasswordHasher = iPasswordHasher;
 
-		public UsersRepository(SystemDbContext systemDbContext, IPasswordHasher iPasswordHasher)
-		{
-			_dbContext = systemDbContext;
-			this.iPasswordHasher = iPasswordHasher;
-		}
-
-        public async Task<UsersModel> FindUserById(int id)
-		{
-            return await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == id) 
-				?? throw new KeyNotFoundException($"User with Id {id} not found.");
+        public async Task<UsersModel> FindUserById(int userId)
+        {
+            return await usersDbConnections.FindUserByIdDb(userId)
+                ?? throw new KeyNotFoundException($"User with Id {userId} not found.");
         }
 
-		public async Task<List<UsersModel>> FindAllUsers(int userId)
-		{
+        public async Task<List<UsersModel>> FindAllUsers(int userId)
+        {
             UsersModel userInfo = await FindUserById(userId);
 
-            if (!userInfo.IsMod) throw new("Este usuário não tem permissão ver os usuários");
+            if (!userInfo.IsMod) throw new("This user does not have permission to see users");
 
-            return await _dbContext.Users.ToListAsync();
-		}
+            return await usersDbConnections.FindAllUsersDb()
+                ?? throw new KeyNotFoundException($"Users not found.");
+        }
 
-		public async Task<UsersModel> FindUserByEmail(string email)
-		{
+        public async Task<UsersModel> FindUserByEmail(string userEmail)
+        {
 
-			return await _dbContext.Users.FirstOrDefaultAsync(x => x.Email == email) 
-				?? throw new KeyNotFoundException($"User with email: {email} not found.");	
-		}
+            return await usersDbConnections.FindUserByEmailDb(userEmail)
+                ?? throw new KeyNotFoundException($"User with email: {userEmail} not found.");
+        }
 
         public async Task<UsersModel> CreateUser(UsersModel user)
-        { 
+        {
             var passwordHash = iPasswordHasher.Hash(user.Password);
             user.Password = passwordHash;
 
-            await _dbContext.Users.AddAsync(user);
-            await _dbContext.SaveChangesAsync();
+            await usersDbConnections.CreateUserDb(user);
 
             return user;
         }
 
         public async Task<UsersModel> UpdateUser(UsersModel user, int id)
-		{
-			UsersModel userById = await FindUserById(id) 
-				?? throw new Exception($"User by id:{id} not found");
+        {
+            UsersModel userById = await FindUserById(id)
+                ?? throw new Exception($"User by id:{id} not found");
 
-			userById.Name = user.Name;
-			userById.Password = user.Password;
+            userById.Name = user.Name;
+            userById.Password = user.Password;
 
-			_dbContext.Users.Update(userById);
-			await _dbContext.SaveChangesAsync();
+            _dbContext.Users.Update(userById);
+            await _dbContext.SaveChangesAsync();
 
-			return userById;
-		}
+            return userById;
+        }
 
         public async Task<bool> DeleteUser(int id)
-		{
-			UsersModel userById = await FindUserById(id) 
-				?? throw new Exception($"User by id:{id} not found");
+        {
+            UsersModel userById = await FindUserById(id)
+                ?? throw new Exception($"User by id:{id} not found");
 
-			_dbContext.Users.Remove(userById);
-			await _dbContext.SaveChangesAsync();
+            _dbContext.Users.Remove(userById);
+            await _dbContext.SaveChangesAsync();
 
-			return true;
-		}
-	}
+            return true;
+        }
+    }
 }
