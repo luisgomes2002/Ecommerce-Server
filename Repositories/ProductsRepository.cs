@@ -1,48 +1,37 @@
 using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Data.DataBaseTables;
 using Server.Models;
 using Server.Repositories.Interfaces;
 
 namespace Server.Repositories
 {
-	public class ProductsRepository : IProductsRepository
+	public class ProductsRepository(ProductsDbConnetions productsDbConnetions, IUsersRepository iUsersRepository) : IProductsRepository
 	{
-		private readonly SystemDbContext _dbContext;
-		private readonly IUsersRepository iUsersRepository;
-
-		public ProductsRepository(SystemDbContext systemDbContext, IUsersRepository iUsersRepository)
-		{
-			_dbContext = systemDbContext;
-			this.iUsersRepository = iUsersRepository;
-
-		}
+		private readonly ProductsDbConnetions productsDbConnetions = productsDbConnetions;
+		private readonly IUsersRepository iUsersRepository = iUsersRepository;
 
 		public async Task<ProductsModel> FindProductById(int productId)
 		{
-			return await _dbContext.Products
-			   .FirstOrDefaultAsync(x => x.Id == productId)
-			   ?? throw new KeyNotFoundException($"Product with Id: {productId} not found.");
-		}
+			return await productsDbConnetions.FindProductByIdDb(productId)
+				?? throw new KeyNotFoundException($"Product with Id: {productId} not found.");
+        }
 
 		public async Task<List<ProductsModel>> FindAllProducts()
 		{
-			return await _dbContext.Products
-				.ToListAsync();
+			return await productsDbConnetions.FindAllProductsDb() 
+				?? throw new KeyNotFoundException($"Products not found.");
 		}
 
 		public async Task<ProductsModel> CreateProduct(ProductsModel product, int userId)
 		{
 			UsersModel userInfo = await iUsersRepository.FindUserById(userId);
 
-			if (!userInfo.IsMod) throw new("Este usu�rio n�o tem permiss�o para criar produtos");
+			if (!userInfo.IsMod) throw new("Este usuário não tem permissão para criar produtos");
 
-			product.UserId = userId;
-			product.UserName = userInfo.Name;
+			await productsDbConnetions.CreateProductDb(product);
 
-			await _dbContext.Products.AddAsync(product);
-			await _dbContext.SaveChangesAsync();
-
-			return product;
+            return product;
 		}
 
 		public async Task<ProductsModel> UpdateProduct(ProductsModel product, int productId, int userId)

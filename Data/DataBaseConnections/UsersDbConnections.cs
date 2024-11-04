@@ -72,13 +72,13 @@ namespace Server.Data.DataBaseTables
             {
                 await connection.OpenAsync();
 
-                string query = @"SELECT UserId, Name, Password, Email, CreatedAt FROM Users";
+                string query = @"SELECT * FROM Users";
 
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
                     using (MySqlDataReader reader = command.ExecuteReader())
                     {
-                        if (await reader.ReadAsync())
+                        while (await reader.ReadAsync())
                         {
                             users.Add(new UsersModel
                             {
@@ -90,9 +90,7 @@ namespace Server.Data.DataBaseTables
                             });
                         }
                     }
-
                 }
-
                 return users;
             }
         }
@@ -126,14 +124,50 @@ namespace Server.Data.DataBaseTables
             }
         }
 
-        public async Task<UsersModel> UpdateUserDb(int UserId)
+        public async Task<bool> UpdateUserDb(int UserId, UsersModel updatedUser)
         {
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 await connection.OpenAsync();
 
-                string query = @"SELECT Email FROM Users WHERE Email = @Email";
+                var queryBuilder = new List<string>();
+                if (updatedUser.Name != null) queryBuilder.Add("Name = @Name");
+                if (updatedUser.Password != null) queryBuilder.Add("Password = @Password");
+                if (updatedUser.Email != null) queryBuilder.Add("Email = @Email");
 
+                if (queryBuilder.Count == 0) return false; // No fields to update
+
+                string query = $"UPDATE Users SET {string.Join(", ", queryBuilder)} WHERE UserId = @UserId";
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@UserId", UserId);
+                    if (updatedUser.Name != null) command.Parameters.AddWithValue("@Name", updatedUser.Name);
+                    if (updatedUser.Password != null) command.Parameters.AddWithValue("@Password", updatedUser.Password);
+                    if (updatedUser.Email != null) command.Parameters.AddWithValue("@Email", updatedUser.Email);
+
+                    int rowsAffected = await command.ExecuteNonQueryAsync();
+                    return rowsAffected > 0;
+                }
+            }
+        }
+
+        public async Task<bool> DeleteUserDb(int userId)
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                string query = @"DELETE FROM Users WHERE UserId = @UserId";
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@UserId", userId);
+
+                    int rowsAffected = await command.ExecuteNonQueryAsync();
+
+                    return rowsAffected > 0;
+                }
             }
         }
     }

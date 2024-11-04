@@ -1,4 +1,5 @@
 using MySql.Data.MySqlClient;
+using Serve.Enums;
 using Server.Models;
 
 namespace Server.Data.DataBaseTables
@@ -7,7 +8,7 @@ namespace Server.Data.DataBaseTables
 	{
 		private readonly string? connectionString = iConfiguration.GetConnectionString("DataBase");
 
-		public async Task CreateProduct(ProductsModel productsModel)
+		public async Task CreateProductDb(ProductsModel productsModel)
 		{
 			using (MySqlConnection connection = new MySqlConnection(connectionString))
 			{
@@ -31,5 +32,72 @@ namespace Server.Data.DataBaseTables
 				}
 			}
 		}
-	}
+
+        public async Task<ProductsModel?> FindProductByIdDb(int productId)
+        {
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                string query = @"SELECT ProductId, Name, Description, Price, Status, CreatedAt FROM Products WHERE ProductId = @UProductId";
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ProductId", productId);
+
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            return new ProductsModel
+                            {
+                                Id = reader.GetInt32("UserId"),
+                                Name = reader.GetString("Name"),
+                                Description = reader.GetString("Description"),
+                                Price = reader.GetFloat("Price"),
+                                Status = (StatusProducts)reader.GetInt32("Status"),
+                                CreatedAt = reader.GetDateTime("CreatedAt")
+                            };
+                        }
+                    }
+
+                }
+
+                return null;
+            }
+
+        }
+
+        public async Task <List<ProductsModel>> FindAllProductsDb()
+        {
+            var products = new List<ProductsModel>();
+
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                string query = @"SELECT * FROM Products";
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    using (MySqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            products.Add(new ProductsModel
+                            {
+                                Id = reader.GetInt32("UserId"),
+                                Name = reader.GetString("Name"),
+                                Description = reader.GetString("Description"),
+                                Price = reader.GetFloat("Price"),
+                                Status = (StatusProducts)reader.GetInt32("Status"),
+                                CreatedAt = reader.GetDateTime("CreatedAt")
+                            });
+                        }
+                    }
+                }
+                return products;
+            }
+        }
+    }
 }

@@ -44,29 +44,31 @@ namespace Server.Repositories
             return user;
         }
 
-        public async Task<UsersModel> UpdateUser(UsersModel user, int id)
+        public async Task<UsersModel> UpdateUser(UsersModel user, int userId)
         {
-            UsersModel userById = await FindUserById(id)
-                ?? throw new Exception($"User by id:{id} not found");
-
+            UsersModel userById = await FindUserById(userId)
+                ?? throw new Exception($"User by id:{userId} not found");
+            
             userById.Name = user.Name;
             userById.Password = user.Password;
+            userById.Email = user.Email;
 
-            _dbContext.Users.Update(userById);
-            await _dbContext.SaveChangesAsync();
+
+            bool result = await usersDbConnections.UpdateUserDb(1, userById);
+            if (result) Console.WriteLine("User updated successfully.");
+            else Console.WriteLine("Failed to update user.");
 
             return userById;
         }
 
-        public async Task<bool> DeleteUser(int id)
+        public async Task<bool> DeleteUser(int userid)
         {
-            UsersModel userById = await FindUserById(id)
-                ?? throw new Exception($"User by id:{id} not found");
+            UsersModel userById = await FindUserById(userid)
+                ?? throw new Exception($"User by id:{userid} not found");
 
-            _dbContext.Users.Remove(userById);
-            await _dbContext.SaveChangesAsync();
+            bool deleteResponse = await usersDbConnections.DeleteUserDb(userid);
 
-            return true;
+            return deleteResponse;
         }
     }
 }

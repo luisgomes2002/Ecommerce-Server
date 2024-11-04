@@ -55,14 +55,10 @@ namespace Server.Repositories
                     ClockSkew = TimeSpan.Zero
                 };
 
-                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+                var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken) ?? throw new SecurityTokenException("Token inválido");
 
-                if (principal == null) throw new SecurityTokenException("Token inválido");
-
-                var userIdClaim = principal.FindFirst(ClaimTypes.Email);
-
-                if (userIdClaim == null) throw new SecurityTokenException("Não foi possível obter o userId do token");
-
+                var userIdClaim = principal.FindFirst(ClaimTypes.Email) ?? throw new SecurityTokenException("Não foi possível obter o userId do token");
+                
                 UsersModel user = await iUserRepository.FindUserByEmail(userIdClaim.Value);
 
                 if (user == null) throw new SecurityTokenException("Usuário não encontrado");

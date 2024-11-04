@@ -104,7 +104,7 @@ namespace Server.Controllers
 
         }
 
-        [HttpPut("{id}")]
+        [HttpPatch("{id}")]
         public async Task<ActionResult<UsersModel>> UpdateUser([FromBody] UsersModel userModel, int id)
         {
             try
